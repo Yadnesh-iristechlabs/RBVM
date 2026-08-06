@@ -1,0 +1,2 @@
+Hostname,IP Address,Asset Type,Exposure,Criticality,Compliance Frameworks
+test-fw-check-01,10.9.9.9,Server,Internal,Tier 2,"SEBI;RBI"
