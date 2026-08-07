@@ -34,3 +34,5 @@ Thumbs.db
 # Uploads / temp
 uploads/
 tmp/
+server/data_export.sql
+server/schema_export.sql

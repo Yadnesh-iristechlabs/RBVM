@@ -51,7 +51,7 @@ function MastersTable({ masterKey, label }: { masterKey: string; label: string }
 
   const fetchValues = () => {
     setLoading(true)
-    fetch(`http://localhost:4001/api/masters/${masterKey}`)
+    fetch(`/api/masters/${masterKey}`)
       .then((res) => res.json())
       .then(setValues)
       .catch(() => toast.error('Failed to load values'))
@@ -64,7 +64,7 @@ function MastersTable({ masterKey, label }: { masterKey: string; label: string }
 
   const handleCreate = async () => {
     if (!newValue.trim()) return
-    await fetch(`http://localhost:4001/api/masters/${masterKey}`, {
+    await fetch(`/api/masters/${masterKey}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ value: newValue.trim() }),
     })
     toast.success(`"${newValue}" added`)
@@ -73,16 +73,16 @@ function MastersTable({ masterKey, label }: { masterKey: string; label: string }
 
   const handleRename = async () => {
     if (!editingValue?.value.trim()) return
-    await fetch(`http://localhost:4001/api/masters/${masterKey}`, {
+    await fetch(`/api/masters/${masterKey}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ value: editingValue.value.trim() }),
     })
-    await fetch(`http://localhost:4001/api/masters/${masterKey}/${editingValue.id}`, { method: 'DELETE' })
+    await fetch(`/api/masters/${masterKey}/${editingValue.id}`, { method: 'DELETE' })
     toast.success('Value updated'); setEditingValue(null); fetchValues()
   }
 
   const confirmDelete = async () => {
     if (!deletingValue) return
-    await fetch(`http://localhost:4001/api/masters/${masterKey}/${deletingValue.id}`, { method: 'DELETE' })
+    await fetch(`/api/masters/${masterKey}/${deletingValue.id}`, { method: 'DELETE' })
     toast.success(`"${deletingValue.value}" removed`); setDeletingValue(null); fetchValues()
   }
 
@@ -189,7 +189,7 @@ function UsersTable() {
 
   const fetchUsers = () => {
     setLoading(true)
-    fetch('http://localhost:4001/api/users')
+    fetch('/api/users')
       .then((res) => res.json())
       .then(setUsers)
       .catch(() => toast.error('Failed to load users'))
@@ -202,7 +202,7 @@ function UsersTable() {
 
   const handleCreate = async () => {
     if (!form.name.trim() || !form.email.trim()) return
-    const res = await fetch('http://localhost:4001/api/users', {
+    const res = await fetch('/api/users', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form),
     })
     if (!res.ok) { const d = await res.json(); toast.error(d.error || 'Failed to add user'); return }
@@ -212,7 +212,7 @@ function UsersTable() {
 
   const handleSaveEdit = async () => {
     if (!editingUser) return
-    const res = await fetch(`http://localhost:4001/api/users/${editingUser.id}`, {
+    const res = await fetch(`/api/users/${editingUser.id}`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: editingUser.name, email: editingUser.email, role: editingUser.role }),
     })
@@ -222,7 +222,7 @@ function UsersTable() {
 
   const confirmDelete = async () => {
     if (!deletingUser) return
-    await fetch(`http://localhost:4001/api/users/${deletingUser.id}`, { method: 'DELETE' })
+    await fetch(`/api/users/${deletingUser.id}`, { method: 'DELETE' })
     toast.success(`"${deletingUser.name}" removed`); setDeletingUser(null); fetchUsers()
   }
 
@@ -377,17 +377,17 @@ function ApplicationsTable() {
 
   const fetchApps = () => {
     setLoading(true)
-    fetch('http://localhost:4001/api/applications').then((r) => r.json()).then(setApps).catch(() => toast.error('Failed to load applications')).finally(() => setLoading(false))
+    fetch('/api/applications').then((r) => r.json()).then(setApps).catch(() => toast.error('Failed to load applications')).finally(() => setLoading(false))
   }
 
   useEffect(() => {
     fetchApps()
-    fetch('http://localhost:4001/api/masters/application_type').then((r) => r.json()).then(setAppTypeOptions).catch(() => {})
+    fetch('/api/masters/application_type').then((r) => r.json()).then(setAppTypeOptions).catch(() => {})
   }, [])
 
   const handleCreate = async () => {
     if (!form.app_name.trim()) return
-    const res = await fetch('http://localhost:4001/api/applications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
+    const res = await fetch('/api/applications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
     if (!res.ok) { toast.error('Failed to create application'); return }
     toast.success(`"${form.app_name}" added`)
     setForm(emptyForm); setShowNewDialog(false); fetchApps()
@@ -395,14 +395,14 @@ function ApplicationsTable() {
 
   const handleSaveEdit = async () => {
     if (!editingApp) return
-    const res = await fetch(`http://localhost:4001/api/applications/${editingApp.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(editingApp) })
+    const res = await fetch(`/api/applications/${editingApp.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(editingApp) })
     if (!res.ok) { toast.error('Failed to update application'); return }
     toast.success('Application updated'); setEditingApp(null); fetchApps()
   }
 
   const confirmDelete = async () => {
     if (!deletingApp) return
-    await fetch(`http://localhost:4001/api/applications/${deletingApp.id}`, { method: 'DELETE' })
+    await fetch(`/api/applications/${deletingApp.id}`, { method: 'DELETE' })
     toast.success(`"${deletingApp.app_name}" removed`); setDeletingApp(null); fetchApps()
   }
 

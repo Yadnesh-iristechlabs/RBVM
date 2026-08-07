@@ -34,7 +34,7 @@ export function Dashboard() {
     const load = async () => {
       setLoading(true)
       try {
-        const res = await fetch('http://localhost:4001/api/assets')
+        const res = await fetch('/api/assets')
         const data = await res.json()
         const mapped: MockAsset[] = data.map((row: any) => ({
           id: row.id,
@@ -65,7 +65,7 @@ export function Dashboard() {
         await Promise.all(
           mapped.map(async (a) => {
             try {
-              const fres = await fetch(`http://localhost:4001/api/qualys/findings/${a.id}`)
+              const fres = await fetch(`/api/qualys/findings/${a.id}`)
               const fdata = await fres.json()
               const c = fdata.severityCounts?.critical ?? 0
               const h = fdata.severityCounts?.high ?? 0
@@ -99,14 +99,14 @@ export function Dashboard() {
 
         if (mapped.length > 0) {
           const total = sevSum.critical + sevSum.high + sevSum.medium + sevSum.low
-          await fetch('http://localhost:4001/api/snapshots', {
+          await fetch('/api/snapshots', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ total, critical: sevSum.critical, high: sevSum.high, medium: sevSum.medium, low: sevSum.low }),
           }).catch(() => {})
         }
 
-        const snapRes = await fetch('http://localhost:4001/api/snapshots')
+        const snapRes = await fetch('/api/snapshots')
         const snapshots = await snapRes.json()
         setTrendData(
           snapshots.map((s: any) => ({

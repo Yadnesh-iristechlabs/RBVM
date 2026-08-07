@@ -62,7 +62,7 @@ export function AddAssetForm({ open, onOpenChange, asset, onSaved }: { open: boo
   const [connectedTools, setConnectedTools] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
-    fetch('http://localhost:4001/api/integrations')
+    fetch('/api/integrations')
       .then((res) => res.json())
       .then((data: any[]) => {
         const status: Record<string, boolean> = {}
@@ -73,7 +73,7 @@ export function AddAssetForm({ open, onOpenChange, asset, onSaved }: { open: boo
   }, [])
 
   useEffect(() => {
-    fetch('http://localhost:4001/api/applications')
+    fetch('/api/applications')
       .then((res) => res.json())
       .then(setApplicationOptions)
       .catch(() => {})
@@ -104,7 +104,7 @@ export function AddAssetForm({ open, onOpenChange, asset, onSaved }: { open: boo
   const [exposureOptions, setExposureOptions] = useState<{ id: number; value: string }[]>([])
 
   useEffect(() => {
-    fetch('http://localhost:4001/api/masters/asset_tier')
+    fetch('/api/masters/asset_tier')
       .then((res) => res.json())
       .then((data) => {
         setTierOptions(data)
@@ -112,7 +112,7 @@ export function AddAssetForm({ open, onOpenChange, asset, onSaved }: { open: boo
       })
       .catch((err) => console.error('failed to load tiers', err))
 
-    fetch('http://localhost:4001/api/masters/asset_type')
+    fetch('/api/masters/asset_type')
       .then((res) => res.json())
       .then((data) => {
         setAssetTypeOptions(data)
@@ -120,7 +120,7 @@ export function AddAssetForm({ open, onOpenChange, asset, onSaved }: { open: boo
       })
       .catch((err) => console.error('failed to load asset types', err))
 
-    fetch('http://localhost:4001/api/masters/asset_domain')
+    fetch('/api/masters/asset_domain')
       .then((res) => res.json())
       .then((data) => {
         setAssetDomainOptions(data)
@@ -128,7 +128,7 @@ export function AddAssetForm({ open, onOpenChange, asset, onSaved }: { open: boo
       })
       .catch((err) => console.error('failed to load asset domains', err))
 
-    fetch('http://localhost:4001/api/masters/asset_class')
+    fetch('/api/masters/asset_class')
       .then((res) => res.json())
       .then((data) => {
         setAssetClassOptions(data)
@@ -136,7 +136,7 @@ export function AddAssetForm({ open, onOpenChange, asset, onSaved }: { open: boo
       })
       .catch((err) => console.error('failed to load asset classes', err))
 
-    fetch('http://localhost:4001/api/masters/asset_environment')
+    fetch('/api/masters/asset_environment')
       .then((res) => res.json())
       .then((data) => {
         setAssetEnvironmentOptions(data)
@@ -144,7 +144,7 @@ export function AddAssetForm({ open, onOpenChange, asset, onSaved }: { open: boo
       })
       .catch((err) => console.error('failed to load environments', err))
 
-    fetch('http://localhost:4001/api/masters/asset_status')
+    fetch('/api/masters/asset_status')
       .then((res) => res.json())
       .then((data) => {
         setAssetStatusOptions(data)
@@ -152,7 +152,7 @@ export function AddAssetForm({ open, onOpenChange, asset, onSaved }: { open: boo
       })
       .catch((err) => console.error('failed to load statuses', err))
 
-    fetch('http://localhost:4001/api/masters/department')
+    fetch('/api/masters/department')
       .then((res) => res.json())
       .then((data) => {
         setDepartmentOptions(data)
@@ -160,7 +160,7 @@ export function AddAssetForm({ open, onOpenChange, asset, onSaved }: { open: boo
       })
       .catch((err) => console.error('failed to load departments', err))
 
-    fetch('http://localhost:4001/api/masters/business_unit')
+    fetch('/api/masters/business_unit')
       .then((res) => res.json())
       .then((data) => {
         setBusinessUnitOptions(data)
@@ -168,7 +168,7 @@ export function AddAssetForm({ open, onOpenChange, asset, onSaved }: { open: boo
       })
       .catch((err) => console.error('failed to load business units', err))
 
-    fetch('http://localhost:4001/api/masters/location')
+    fetch('/api/masters/location')
       .then((res) => res.json())
       .then((data) => {
         setLocationOptions(data)
@@ -176,7 +176,7 @@ export function AddAssetForm({ open, onOpenChange, asset, onSaved }: { open: boo
       })
       .catch((err) => console.error('failed to load locations', err))
 
-    fetch('http://localhost:4001/api/masters/asset_group')
+    fetch('/api/masters/asset_group')
       .then((res) => res.json())
       .then((data) => {
         setAssetGroupOptions(data)
@@ -184,22 +184,22 @@ export function AddAssetForm({ open, onOpenChange, asset, onSaved }: { open: boo
       })
       .catch((err) => console.error('failed to load asset groups', err))
 
-    fetch('http://localhost:4001/api/masters/regulatory_config')
+    fetch('/api/masters/regulatory_config')
       .then((res) => res.json())
       .then((data) => setComplianceOptions(data))
       .catch((err) => console.error('failed to load compliance frameworks', err))
 
-    fetch('http://localhost:4001/api/masters/controls')
+    fetch('/api/masters/controls')
       .then((res) => res.json())
       .then((data) => setControlsOptions(data))
       .catch((err) => console.error('failed to load controls', err))
 
-    fetch('http://localhost:4001/api/masters/tags')
+    fetch('/api/masters/tags')
       .then((res) => res.json())
       .then((data) => setTagOptions(data))
       .catch((err) => console.error('failed to load tags', err))
 
-    fetch('http://localhost:4001/api/masters/exposure')
+    fetch('/api/masters/exposure')
       .then((res) => res.json())
       .then((data) => setExposureOptions(data))
       .catch((err) => console.error('failed to load exposure', err))
@@ -210,7 +210,7 @@ export function AddAssetForm({ open, onOpenChange, asset, onSaved }: { open: boo
   const [userList, setUserList] = useState<{ id: number; name: string; email: string }[]>([])
 
   useEffect(() => {
-    fetch('http://localhost:4001/api/users')
+    fetch('/api/users')
       .then((res) => res.json())
       .then(setUserList)
       .catch(() => {})
@@ -247,7 +247,7 @@ export function AddAssetForm({ open, onOpenChange, asset, onSaved }: { open: boo
     setSaving(true)
     const payload = { hostname, ip_address: ipAddress, fqdn, asset_type: assetType, exposure, criticality, asset_domain: assetDomain, asset_class: assetClass, asset_environment: assetEnvironment, asset_status: assetStatus, department, business_unit: businessUnit, location, asset_group_master: assetGroupMaster, mac_address: macAddress, port: port ? Number(port) : null, url_ssid: urlSsid, user_type: userType, endpoint: endpoints, application_id: applicationId || null, qualys_asset_id: qualysAssetId, qualys_agent_id: qualysAgentId, qualys_netbios_hostname: qualysNetbios, region_vpc_id: regionVpcId, qweb_host_id: qwebHostId, tenable_asset_id: tenableAssetId, tenable_agent_name: tenableAgentName, tenable_repository_name: tenableRepoName, tenable_manager_name: tenableManagerName, compliance_frameworks: compliance, force }
     try {
-      const url = isEdit ? `http://localhost:4001/api/assets/${asset!.id}` : 'http://localhost:4001/api/assets'
+      const url = isEdit ? `/api/assets/${asset!.id}` : '/api/assets'
       const method = isEdit ? 'PUT' : 'POST'
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
       if (res.status === 409) {

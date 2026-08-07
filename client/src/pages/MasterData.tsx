@@ -40,7 +40,7 @@ export function MasterData() {
 
   const fetchValues = () => {
     setLoading(true)
-    fetch(`http://localhost:4001/api/masters/${activeTab}`)
+    fetch(`/api/masters/${activeTab}`)
       .then((res) => res.json())
       .then((data) => setValues(data))
       .catch(() => toast.error('Failed to load values'))
@@ -57,7 +57,7 @@ export function MasterData() {
   const handleCreate = async () => {
     if (!newValue.trim()) return
     try {
-      await fetch(`http://localhost:4001/api/masters/${activeTab}`, {
+      await fetch(`/api/masters/${activeTab}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ value: newValue.trim() }),
@@ -75,12 +75,12 @@ export function MasterData() {
     if (!editingValue || !editingValue.value.trim()) return
     try {
       // Rename = add the new value, deactivate the old one (masters table has no PUT-by-id rename route yet)
-      await fetch(`http://localhost:4001/api/masters/${activeTab}`, {
+      await fetch(`/api/masters/${activeTab}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ value: editingValue.value.trim() }),
       })
-      await fetch(`http://localhost:4001/api/masters/${activeTab}/${editingValue.id}`, { method: 'DELETE' })
+      await fetch(`/api/masters/${activeTab}/${editingValue.id}`, { method: 'DELETE' })
       toast.success('Value updated')
       setEditingValue(null)
       fetchValues()
@@ -92,7 +92,7 @@ export function MasterData() {
   const confirmDelete = async () => {
     if (!deletingValue) return
     try {
-      await fetch(`http://localhost:4001/api/masters/${activeTab}/${deletingValue.id}`, { method: 'DELETE' })
+      await fetch(`/api/masters/${activeTab}/${deletingValue.id}`, { method: 'DELETE' })
       toast.success(`"${deletingValue.value}" removed`)
       setDeletingValue(null)
       fetchValues()

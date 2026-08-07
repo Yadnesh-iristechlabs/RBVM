@@ -114,7 +114,7 @@ export function AssetsTable({ refreshKey, search = '', filter = 'all', advFilter
   const fetchAssets = async () => {
     setLoading(true)
     try {
-      const res = await fetch('http://localhost:4001/api/assets')
+      const res = await fetch('/api/assets')
       const data = await res.json()
       const mapped: MockAsset[] = data.map((row: any) => ({
         id: row.id,
@@ -258,7 +258,7 @@ export function AssetsTable({ refreshKey, search = '', filter = 'all', advFilter
   useEffect(() => {
     if (bulkMastersOpen) {
       BULK_MASTER_FIELDS.forEach((f) => {
-        fetch(`http://localhost:4001/api/masters/${f.type}`)
+        fetch(`/api/masters/${f.type}`)
           .then((res) => res.json())
           .then((data) => setMasterOptions((prev) => ({ ...prev, [f.key]: data })))
           .catch(() => {})
@@ -271,7 +271,7 @@ export function AssetsTable({ refreshKey, search = '', filter = 'all', advFilter
     if (Object.keys(fields).length === 0) return
     setBulkMastersSaving(true)
     try {
-      await fetch('http://localhost:4001/api/assets/bulk/masters', {
+      await fetch('/api/assets/bulk/masters', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: Array.from(selected), fields }),
@@ -291,7 +291,7 @@ export function AssetsTable({ refreshKey, search = '', filter = 'all', advFilter
 
   useEffect(() => {
     if (bulkCoordOpen) {
-      fetch('http://localhost:4001/api/users')
+      fetch('/api/users')
         .then((res) => res.json())
         .then(setCoordUserList)
         .catch(() => {})
@@ -309,7 +309,7 @@ export function AssetsTable({ refreshKey, search = '', filter = 'all', advFilter
     if (coordList.length === 0) return
     setCoordSaving(true)
     try {
-      await fetch('http://localhost:4001/api/assets/bulk/coordinators', {
+      await fetch('/api/assets/bulk/coordinators', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: Array.from(selected), coordinators: coordList, mode: coordMode }),
@@ -329,7 +329,7 @@ export function AssetsTable({ refreshKey, search = '', filter = 'all', advFilter
 
   useEffect(() => {
     if (bulkOwnerOpen) {
-      fetch('http://localhost:4001/api/users')
+      fetch('/api/users')
         .then((res) => res.json())
         .then(setOwnerList)
         .catch(() => {})
@@ -340,7 +340,7 @@ export function AssetsTable({ refreshKey, search = '', filter = 'all', advFilter
     if (!bulkOwnerValue.trim()) return
     setBulkOwnerSaving(true)
     try {
-      await fetch('http://localhost:4001/api/assets/bulk/owner', {
+      await fetch('/api/assets/bulk/owner', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: Array.from(selected), owner: bulkOwnerValue.trim() }),
@@ -362,7 +362,7 @@ export function AssetsTable({ refreshKey, search = '', filter = 'all', advFilter
     setBulkDeleting(true)
     const count = selected.size
     try {
-      await Promise.all(Array.from(selected).map((id) => fetch(`http://localhost:4001/api/assets/${id}`, { method: 'DELETE' })))
+      await Promise.all(Array.from(selected).map((id) => fetch(`/api/assets/${id}`, { method: 'DELETE' })))
       toast.success(`${count} assets deleted`)
       setSelected(new Set())
       setBulkDeleteOpen(false)
@@ -572,7 +572,7 @@ export function AssetsTable({ refreshKey, search = '', filter = 'all', advFilter
                 disabled={deleteConfirmText !== 'DELETE'}
                 onClick={async () => {
                   try {
-                    await fetch(`http://localhost:4001/api/assets/${deleteTarget.id}`, { method: 'DELETE' })
+                    await fetch(`/api/assets/${deleteTarget.id}`, { method: 'DELETE' })
                     toast.success(`${deleteTarget.hostname} deleted`)
                     setDeleteTarget(null)
                     setDeleteConfirmText('')

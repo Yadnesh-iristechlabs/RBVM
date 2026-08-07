@@ -39,8 +39,8 @@ export function Integrations() {
   const [genSyncing, setGenSyncing] = useState<string | null>(null)
 
   const fetchConnectors = () => {
-    fetch('http://localhost:4001/api/connectors').then((r) => r.json()).then(setAllConnectors).catch(() => {})
-    fetch('http://localhost:4001/api/integrations').then((r) => r.json()).then((data: any[]) => {
+    fetch('/api/connectors').then((r) => r.json()).then(setAllConnectors).catch(() => {})
+    fetch('/api/integrations').then((r) => r.json()).then((data: any[]) => {
       const status: Record<string, boolean> = {}
       data.forEach((d) => { status[d.name] = d.connected })
       setConnectorStatus(status)
@@ -64,7 +64,7 @@ export function Integrations() {
       return
     }
     try {
-      const res = await fetch(`http://localhost:4001/api/connectors/${manageConnector}/test`, {
+      const res = await fetch(`/api/connectors/${manageConnector}/test`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(buildConnectPayload()),
       })
@@ -79,7 +79,7 @@ export function Integrations() {
 
   const genSaveConnect = async () => {
     if (!manageConnector) return
-    await fetch(`http://localhost:4001/api/integrations/${manageConnector}/connect`, {
+    await fetch(`/api/integrations/${manageConnector}/connect`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(buildConnectPayload()),
     })
@@ -92,7 +92,7 @@ export function Integrations() {
   const genSync = async (name: string) => {
     setGenSyncing(name)
     try {
-      const res = await fetch(`http://localhost:4001/api/connectors/${name}/sync`, { method: 'POST' })
+      const res = await fetch(`/api/connectors/${name}/sync`, { method: 'POST' })
       const data = await res.json()
       if (!res.ok) { toast.error(data.error || 'Sync failed'); return }
       toast.success(data.details || `Sync complete — ${data.assetsFound} assets found`)
@@ -105,7 +105,7 @@ export function Integrations() {
   }
 
   const fetchOtherIntegrations = () => {
-    fetch('http://localhost:4001/api/integrations')
+    fetch('/api/integrations')
       .then((res) => res.json())
       .then((data) => setOtherIntegrations(data.filter((i: any) => i.name !== 'qualys')))
       .catch(() => {})
@@ -121,7 +121,7 @@ export function Integrations() {
   const [testStatus, setTestStatus] = useState<'idle' | 'success' | 'fail'>('idle')
 
   useEffect(() => {
-    fetch('http://localhost:4001/api/integrations/qualys')
+    fetch('/api/integrations/qualys')
       .then((res) => res.json())
       .then((data) => {
         setConnected(!!data.connected)
@@ -143,7 +143,7 @@ export function Integrations() {
     }
     setSyncing(true)
     try {
-      const res = await fetch('http://localhost:4001/api/qualys/sync', { method: 'POST' })
+      const res = await fetch('/api/qualys/sync', { method: 'POST' })
       const data = await res.json()
       setLastSync(new Date().toLocaleString())
       toast.success(data.synced > 0 ? `Sync complete — ${data.synced} new assets added` : 'Sync complete — no new assets found')
@@ -297,7 +297,7 @@ export function Integrations() {
                       <button
                         onClick={async () => {
                           try {
-                            await fetch('http://localhost:4001/api/integrations/qualys/disconnect', { method: 'POST' })
+                            await fetch('/api/integrations/qualys/disconnect', { method: 'POST' })
                             setConnected(false)
                             toast.success('Disconnected from Qualys VMDR')
                           } catch (err) {
@@ -397,7 +397,7 @@ export function Integrations() {
                 disabled={testStatus !== 'success'}
                 onClick={async () => {
                   try {
-                    const res = await fetch('http://localhost:4001/api/integrations/qualys/connect', {
+                    const res = await fetch('/api/integrations/qualys/connect', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ endpoint: configValue, username: configUserId, password: configPassword }),
@@ -624,7 +624,7 @@ export function Integrations() {
             </tbody>
           </table>
           <div className="px-4 py-3 border-t border-border/40 bg-muted/20 text-xs text-muted-foreground">
-            Base URL <span className="font-mono text-foreground/80">http://localhost:4001</span>
+            Base URL <span className="font-mono text-foreground/80"></span>
           </div>
         </div>
       )}

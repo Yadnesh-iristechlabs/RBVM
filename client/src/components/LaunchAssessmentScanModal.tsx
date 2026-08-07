@@ -8,7 +8,7 @@ export function LaunchAssessmentScanModal({ onClose }: { onClose: () => void }) 
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    fetch('http://localhost:4001/api/assessments')
+    fetch('/api/assessments')
       .then((r) => r.json())
       .then((data: any[]) => setAssessments(data.filter((a) => !['Completed', 'Cancelled'].includes(a.status))))
       .catch(() => {})
@@ -18,7 +18,7 @@ export function LaunchAssessmentScanModal({ onClose }: { onClose: () => void }) 
     if (!form.assessment_id) { toast.error('Please select an assessment'); return }
     setSaving(true)
     try {
-      const res = await fetch('http://localhost:4001/api/auto-scan/schedule', {
+      const res = await fetch('/api/auto-scan/schedule', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })

@@ -49,7 +49,7 @@ function randomDrift(kind: 'added' | 'closed' | 'reopened', count: number): Drif
 }
 
 async function generateRealJob(connector: string): Promise<SyncJob> {
-  const assetsRes = await fetch('http://localhost:4001/api/assets')
+  const assetsRes = await fetch('/api/assets')
   const assets: { id: number; hostname: string }[] = await assetsRes.json()
 
   const drift: AssetDrift[] = []
@@ -59,7 +59,7 @@ async function generateRealJob(connector: string): Promise<SyncJob> {
   await Promise.all(
     assets.map(async (a) => {
       try {
-        const fres = await fetch(`http://localhost:4001/api/qualys/findings/${a.id}`)
+        const fres = await fetch(`/api/qualys/findings/${a.id}`)
         const fdata = await fres.json()
         const findings = (fdata.findings ?? []).map((f: any) => ({
           title: f.title,
@@ -251,7 +251,7 @@ export function Scans() {
   const runSync = async () => {
     setSyncing(true)
     try {
-      await fetch('http://localhost:4001/api/qualys/sync', { method: 'POST' })
+      await fetch('/api/qualys/sync', { method: 'POST' })
       const job = await generateRealJob('Qualys VMDR')
       setJobs((prev) => [job, ...prev])
       setLastSync(new Date().toLocaleString())

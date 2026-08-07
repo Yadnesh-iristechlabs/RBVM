@@ -63,7 +63,7 @@ export function Assets() {
   const handleExport = async (format: 'csv' | 'xlsx' | 'xml', scope: 'all' | 'filtered' | 'selected' = 'all') => {
     setExportMenuOpen(false)
     try {
-      const res = await fetch('http://localhost:4001/api/assets')
+      const res = await fetch('/api/assets')
       let data = await res.json()
 
       if (scope === 'selected') {

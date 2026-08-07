@@ -31,8 +31,8 @@ function NewRequestModal({ onClose, onCreated }: { onClose: () => void; onCreate
   })
 
   useEffect(() => {
-    fetch('http://localhost:4001/api/masters/assessment_type').then((r) => r.json()).then(setAssessmentTypeOptions).catch(() => {})
-    fetch('http://localhost:4001/api/applications').then((r) => r.json()).then(setApplications).catch(() => {})
+    fetch('/api/masters/assessment_type').then((r) => r.json()).then(setAssessmentTypeOptions).catch(() => {})
+    fetch('/api/applications').then((r) => r.json()).then(setApplications).catch(() => {})
   }, [])
 
   const isFullOrCalendar = form.type_of_assessment === 'Full Testing' || form.type_of_assessment === 'Calendar'
@@ -50,7 +50,7 @@ function NewRequestModal({ onClose, onCreated }: { onClose: () => void; onCreate
     }
     setSaving(true)
     try {
-      const res = await fetch('http://localhost:4001/api/assessment-requests', {
+      const res = await fetch('/api/assessment-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -205,7 +205,7 @@ function CreateAssessmentModal({ request, onClose, onCreated }: { request: Asses
   const [publishOnTheGo, setPublishOnTheGo] = useState(false)
 
   useEffect(() => {
-    fetch('http://localhost:4001/api/users').then((r) => r.json()).then(setUsers).catch(() => {})
+    fetch('/api/users').then((r) => r.json()).then(setUsers).catch(() => {})
   }, [])
 
   const testers = users.filter((u) => u.is_tester)
@@ -219,7 +219,7 @@ function CreateAssessmentModal({ request, onClose, onCreated }: { request: Asses
     setSaving(true)
     try {
       const reviewerAuto = reviewers.length > 0 ? reviewers[Math.floor(Math.random() * reviewers.length)].name : null
-      const res = await fetch(`http://localhost:4001/api/assessment-requests/${request.id}/approve`, {
+      const res = await fetch(`/api/assessment-requests/${request.id}/approve`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tester, coordinators, reviewer: reviewerAuto, publish_on_the_go: publishOnTheGo }),
@@ -345,7 +345,7 @@ function FindingsDrawer({ assessment, onClose }: { assessment: any; onClose: () 
 
   const fetchFindings = () => {
     setLoading(true)
-    fetch(`http://localhost:4001/api/vulnerabilities/assessment/${assessment.id}`).then((r) => r.json()).then(setFindings).catch(() => {}).finally(() => setLoading(false))
+    fetch(`/api/vulnerabilities/assessment/${assessment.id}`).then((r) => r.json()).then(setFindings).catch(() => {}).finally(() => setLoading(false))
   }
 
   useEffect(() => { fetchFindings() }, [assessment.id])
@@ -354,7 +354,7 @@ function FindingsDrawer({ assessment, onClose }: { assessment: any; onClose: () 
     if (!form.title.trim()) { toast.error('Title is required'); return }
     setSaving(true)
     try {
-      const res = await fetch('http://localhost:4001/api/vulnerabilities/discover', {
+      const res = await fetch('/api/vulnerabilities/discover', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, cvss_score: form.cvss_score ? Number(form.cvss_score) : null, assessment_id: assessment.id, asset_id: 200, discovered_by: assessment.tester }),
       })
@@ -372,13 +372,13 @@ function FindingsDrawer({ assessment, onClose }: { assessment: any; onClose: () 
   }
 
   const publishFinding = async (id: number) => {
-    await fetch(`http://localhost:4001/api/vulnerabilities/discovery/${id}/publish`, { method: 'PUT' })
+    await fetch(`/api/vulnerabilities/discovery/${id}/publish`, { method: 'PUT' })
     toast.success('Finding published')
     fetchFindings()
   }
 
   const requestVerdict = async (id: number) => {
-    const res = await fetch(`http://localhost:4001/api/vulnerabilities/discovery/${id}/request-verdict`, {
+    const res = await fetch(`/api/vulnerabilities/discovery/${id}/request-verdict`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ verdict: 'False Positive', requested_by: assessment.tester }),
     })
@@ -390,7 +390,7 @@ function FindingsDrawer({ assessment, onClose }: { assessment: any; onClose: () 
 
   const decideVerdict = async (id: number, decision: 'Approved' | 'Rejected', level: 'L1' | 'Final') => {
     const reviewer = level === 'L1' ? assessment.reviewer : (approverName || assessment.reviewer)
-    const res = await fetch(`http://localhost:4001/api/vulnerabilities/discovery/${id}/verdict-decision`, {
+    const res = await fetch(`/api/vulnerabilities/discovery/${id}/verdict-decision`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ decision, reviewed_by: reviewer, level }),
     })
@@ -400,7 +400,7 @@ function FindingsDrawer({ assessment, onClose }: { assessment: any; onClose: () 
   }
 
   const openTicket = async (id: number) => {
-    const res = await fetch(`http://localhost:4001/api/vulnerabilities/discovery/${id}/open-ticket`, {
+    const res = await fetch(`/api/vulnerabilities/discovery/${id}/open-ticket`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ remediation_owner: assessment.tester }),
     })
@@ -411,7 +411,7 @@ function FindingsDrawer({ assessment, onClose }: { assessment: any; onClose: () 
   }
 
   const updateTicketStatus = async (id: number, status: string) => {
-    await fetch(`http://localhost:4001/api/vulnerabilities/discovery/${id}/ticket-status`, {
+    await fetch(`/api/vulnerabilities/discovery/${id}/ticket-status`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }),
     })
     toast.success(`Ticket updated to ${status}`)
@@ -419,20 +419,20 @@ function FindingsDrawer({ assessment, onClose }: { assessment: any; onClose: () 
   }
 
   const markClean = async (id: number) => {
-    await fetch(`http://localhost:4001/api/vulnerabilities/discovery/${id}/mark-clean`, { method: 'PUT' })
+    await fetch(`/api/vulnerabilities/discovery/${id}/mark-clean`, { method: 'PUT' })
     toast.success('Marked clean — no remediation needed')
     fetchFindings()
   }
 
   const requestRetest = async (id: number) => {
-    const res = await fetch(`http://localhost:4001/api/assessment-requests/retest/${id}`, { method: 'POST' })
+    const res = await fetch(`/api/assessment-requests/retest/${id}`, { method: 'POST' })
     if (!res.ok) { const d = await res.json(); toast.error(d.error); return }
     const data = await res.json()
     toast.success(`Re-test request ${data.request_id} created`)
   }
 
   const discardFinding = async (id: number) => {
-    await fetch(`http://localhost:4001/api/vulnerabilities/discovery/${id}/discard`, { method: 'PUT' })
+    await fetch(`/api/vulnerabilities/discovery/${id}/discard`, { method: 'PUT' })
     toast.success('Draft discarded')
     fetchFindings()
   }
@@ -454,7 +454,7 @@ function FindingsDrawer({ assessment, onClose }: { assessment: any; onClose: () 
     try {
       const formData = new FormData()
       formData.append('file', uploadFile)
-      const res = await fetch(`http://localhost:4001/api/vulnerabilities/bulk-upload/${assessment.id}`, { method: 'POST', body: formData })
+      const res = await fetch(`/api/vulnerabilities/bulk-upload/${assessment.id}`, { method: 'POST', body: formData })
       const data = await res.json()
       if (!res.ok) { toast.error(data.error || 'Upload failed'); return }
       setUploadResult(data)
@@ -468,8 +468,8 @@ function FindingsDrawer({ assessment, onClose }: { assessment: any; onClose: () 
   }
 
   useEffect(() => {
-    fetch(`http://localhost:4001/api/assessments/${assessment.id}/asset-details`).then((r) => r.json()).then(setAssetDetails).catch(() => {})
-    fetch('http://localhost:4001/api/users').then((r) => r.json()).then((users: any[]) => {
+    fetch(`/api/assessments/${assessment.id}/asset-details`).then((r) => r.json()).then(setAssetDetails).catch(() => {})
+    fetch('/api/users').then((r) => r.json()).then((users: any[]) => {
       const approver = users.find((u) => u.is_approver)
       if (approver) setApproverName(approver.name)
     }).catch(() => {})
@@ -478,13 +478,13 @@ function FindingsDrawer({ assessment, onClose }: { assessment: any; onClose: () 
   const [scheduleForm, setScheduleForm] = useState({ scan_tool: 'Qualys', scan_type: 'Normal Scan', frequency: 'Once', run_time: '09:00' })
 
   const fetchSchedules = () => {
-    fetch(`http://localhost:4001/api/auto-scan/schedule/assessment/${assessment.id}`).then((r) => r.json()).then(setSchedules).catch(() => {})
+    fetch(`/api/auto-scan/schedule/assessment/${assessment.id}`).then((r) => r.json()).then(setSchedules).catch(() => {})
   }
 
   useEffect(() => { fetchSchedules() }, [assessment.id])
 
   const createSchedule = async () => {
-    const res = await fetch('http://localhost:4001/api/auto-scan/schedule', {
+    const res = await fetch('/api/auto-scan/schedule', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...scheduleForm, assessment_id: assessment.id }),
     })
@@ -802,13 +802,13 @@ function AssessmentsListing() {
 
   const fetchAssessments = () => {
     setLoading(true)
-    fetch('http://localhost:4001/api/assessments').then((r) => r.json()).then(setAssessments).catch(() => {}).finally(() => setLoading(false))
+    fetch('/api/assessments').then((r) => r.json()).then(setAssessments).catch(() => {}).finally(() => setLoading(false))
   }
 
   useEffect(() => { fetchAssessments() }, [])
 
   const changeStatus = async (id: number, status: string, discardDrafts?: boolean) => {
-    const res = await fetch(`http://localhost:4001/api/assessments/${id}/status`, {
+    const res = await fetch(`/api/assessments/${id}/status`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status, discardDrafts }),
     })
     if (!res.ok) {
@@ -896,7 +896,7 @@ function VulnerabilitySummaryView() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('http://localhost:4001/api/vulnerabilities/summary').then((r) => r.json()).then(setSummary).catch(() => {}).finally(() => setLoading(false))
+    fetch('/api/vulnerabilities/summary').then((r) => r.json()).then(setSummary).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
   return (
@@ -947,7 +947,7 @@ function VulnerabilityListView() {
   const [severityFilter, setSeverityFilter] = useState('all')
 
   useEffect(() => {
-    fetch('http://localhost:4001/api/vulnerabilities/all').then((r) => r.json()).then(setFindings).catch(() => {}).finally(() => setLoading(false))
+    fetch('/api/vulnerabilities/all').then((r) => r.json()).then(setFindings).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
   const filtered = severityFilter === 'all' ? findings : findings.filter((f) => f.snapshot_severity === severityFilter)
@@ -1011,7 +1011,7 @@ export function RequestAssessmentTab() {
 
   const fetchRequests = () => {
     setLoading(true)
-    fetch('http://localhost:4001/api/assessment-requests')
+    fetch('/api/assessment-requests')
       .then((res) => res.json())
       .then(setRequests)
       .catch(() => toast.error('Failed to load assessment requests'))
@@ -1022,7 +1022,7 @@ export function RequestAssessmentTab() {
 
 
   const handleReject = async (id: number) => {
-    await fetch(`http://localhost:4001/api/assessment-requests/${id}/reject`, { method: 'PUT' })
+    await fetch(`/api/assessment-requests/${id}/reject`, { method: 'PUT' })
     toast.success('Request rejected')
     fetchRequests()
   }

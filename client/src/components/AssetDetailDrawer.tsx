@@ -200,7 +200,7 @@ function ExceptionsTab({ findings, assetId }: { findings: Finding[]; assetId: nu
   const fetchExceptions = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`http://localhost:4001/api/exceptions/asset/${assetId}`)
+      const res = await fetch(`/api/exceptions/asset/${assetId}`)
       const data = await res.json()
       const mapped: Exception[] = data.map((row: any) => ({
         id: row.id,
@@ -228,7 +228,7 @@ function ExceptionsTab({ findings, assetId }: { findings: Finding[]; assetId: nu
     const exp = new Date()
     exp.setDate(exp.getDate() + 90)
     try {
-      await fetch('http://localhost:4001/api/exceptions', {
+      await fetch('/api/exceptions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -338,7 +338,7 @@ export function AssetDetailDrawer({ asset, onClose, onEdit }: { asset: MockAsset
 
   useEffect(() => {
     setLoadingFindings(true)
-    fetch(`http://localhost:4001/api/qualys/findings/${asset.id}`)
+    fetch(`/api/qualys/findings/${asset.id}`)
       .then((res) => res.json())
       .then((data) => {
         setFindings(data.findings ?? [])
@@ -673,7 +673,7 @@ function ComponentsTab({ assetId }: { assetId: number }) {
 
   const fetchComponents = () => {
     setLoading(true)
-    fetch(`http://localhost:4001/api/components/asset/${assetId}`)
+    fetch(`/api/components/asset/${assetId}`)
       .then((res) => res.json())
       .then(setComponents)
       .catch(() => {})
@@ -684,7 +684,7 @@ function ComponentsTab({ assetId }: { assetId: number }) {
 
   const addComponent = async () => {
     if (!form.component_name.trim()) return
-    await fetch('http://localhost:4001/api/components', {
+    await fetch('/api/components', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ asset_id: assetId, ...form }),
     })
@@ -693,7 +693,7 @@ function ComponentsTab({ assetId }: { assetId: number }) {
   }
 
   const removeComponent = async (id: number) => {
-    await fetch(`http://localhost:4001/api/components/${id}`, { method: 'DELETE' })
+    await fetch(`/api/components/${id}`, { method: 'DELETE' })
     fetchComponents()
   }
 

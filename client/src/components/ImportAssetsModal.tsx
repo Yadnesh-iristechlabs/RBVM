@@ -105,7 +105,7 @@ export function ImportAssetsModal({ open, onOpenChange, onImported }: { open: bo
     try {
       const form = new FormData()
       form.append('file', f)
-      const res = await fetch('http://localhost:4001/api/import/validate', { method: 'POST', body: form })
+      const res = await fetch('/api/import/validate', { method: 'POST', body: form })
       const data = await res.json()
       const elapsed = Date.now() - startTime
       const minDelay = 800
@@ -131,7 +131,7 @@ export function ImportAssetsModal({ open, onOpenChange, onImported }: { open: bo
     try {
       const form = new FormData()
       form.append('file', file)
-      const res = await fetch('http://localhost:4001/api/import/commit', { method: 'POST', body: form })
+      const res = await fetch('/api/import/commit', { method: 'POST', body: form })
       const data = await res.json()
       clearInterval(progressTimer)
       setProgressPct(100)

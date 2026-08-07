@@ -23,8 +23,8 @@ export function ApplicationsView() {
       setLoading(true)
       try {
         const [appsRes, assetsRes] = await Promise.all([
-          fetch('http://localhost:4001/api/applications').then((r) => r.json()),
-          fetch('http://localhost:4001/api/assets').then((r) => r.json()),
+          fetch('/api/applications').then((r) => r.json()),
+          fetch('/api/assets').then((r) => r.json()),
         ])
         const enriched = appsRes.map((a: any) => {
           const linkedAssets = assetsRes.filter((as: any) => as.application_id === a.id)
