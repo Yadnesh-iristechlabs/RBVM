@@ -37,8 +37,11 @@ router.post('/:name/connect', async (req, res) => {
 
   try {
     const encryptedPassword = password ? encrypt(password) : null
+    // Only encrypt genuinely sensitive fields — configuration values (TLS setting,
+    // fixed header names, etc.) are stored as plain text since they aren't secrets.
+    const SENSITIVE_FIELD_KEYS = ['access_key', 'secret_key', 'client_id', 'client_secret', 'api_key', 'client_auth_token']
     const encryptedExtraFields = extra_fields
-      ? Object.fromEntries(Object.entries(extra_fields).map(([k, v]) => [k, typeof v === 'string' && v ? encrypt(v) : v]))
+      ? Object.fromEntries(Object.entries(extra_fields).map(([k, v]) => [k, SENSITIVE_FIELD_KEYS.includes(k) && typeof v === 'string' && v ? encrypt(v) : v]))
       : {}
 
     const result = await pool.query(

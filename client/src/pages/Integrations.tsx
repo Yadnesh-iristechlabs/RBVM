@@ -36,6 +36,23 @@ export function Integrations() {
   const [genPassword, setGenPassword] = useState('')
   const [genAccessKey, setGenAccessKey] = useState('')
   const [genSecretKey, setGenSecretKey] = useState('')
+  const [genClientId, setGenClientId] = useState('')
+  const [genClientSecret, setGenClientSecret] = useState('')
+  const [genApiKey, setGenApiKey] = useState('')
+  const [genClientToken, setGenClientToken] = useState('')
+  const [genTlsValidation, setGenTlsValidation] = useState('Enabled')
+  const [genCmdbTables, setGenCmdbTables] = useState('cmdb_ci, cmdb_rel_ci')
+  const [genReturnedFields, setGenReturnedFields] = useState('sys_id,name,sys_class_name,operational_status,install_status,sys_updated_on')
+  const [genPageSize, setGenPageSize] = useState('1000')
+  const [genOpenApiUrl, setGenOpenApiUrl] = useState('')
+  const [genOauthTokenUrl, setGenOauthTokenUrl] = useState('')
+  const [genOauthScope, setGenOauthScope] = useState('')
+  const [genAssetPath, setGenAssetPath] = useState('/assets')
+  const [genRelationshipPath, setGenRelationshipPath] = useState('/relationships')
+  const [genJsonRecordsPath, setGenJsonRecordsPath] = useState('data.items')
+  const [genPrimaryKeyField, setGenPrimaryKeyField] = useState('id')
+  const [genUpdatedTsField, setGenUpdatedTsField] = useState('updated_at')
+  const [genPaginationStrategy, setGenPaginationStrategy] = useState('Cursor or continuation token')
   const [genSyncing, setGenSyncing] = useState<string | null>(null)
 
   const fetchConnectors = () => {
@@ -51,7 +68,29 @@ export function Integrations() {
 
   const buildConnectPayload = () => {
     if (manageConnector === 'tenable') {
-      return { endpoint: 'https://cloud.tenable.com', extra_fields: { access_key: genAccessKey, secret_key: genSecretKey } }
+      return { endpoint: 'https://cloud.tenable.com', extra_fields: { access_key: genAccessKey, secret_key: genSecretKey, tls_validation: genTlsValidation } }
+    }
+    if (manageConnector === 'servicenow') {
+      return { endpoint: genEndpoint, extra_fields: { client_id: genClientId, client_secret: genClientSecret, cmdb_tables: genCmdbTables, returned_fields: genReturnedFields, page_size: genPageSize, tls_validation: genTlsValidation } }
+    }
+    if (manageConnector === 'burpsuite') {
+      return { endpoint: genEndpoint, extra_fields: { api_key: genApiKey, tls_validation: genTlsValidation } }
+    }
+    if (manageConnector === 'fortify') {
+      return { endpoint: genEndpoint, extra_fields: { client_auth_token: genClientToken } }
+    }
+    if (manageConnector === 'custom_cmdb') {
+      return {
+        endpoint: genEndpoint,
+        extra_fields: {
+          openapi_url: genOpenApiUrl, oauth_token_url: genOauthTokenUrl,
+          client_id: genClientId, client_secret: genClientSecret, oauth_scope: genOauthScope,
+          asset_path: genAssetPath, relationship_path: genRelationshipPath,
+          json_records_path: genJsonRecordsPath, primary_key_field: genPrimaryKeyField,
+          updated_ts_field: genUpdatedTsField, pagination_strategy: genPaginationStrategy,
+          tls_validation: genTlsValidation,
+        },
+      }
     }
     return { endpoint: genEndpoint, username: genUsername, password: genPassword }
   }
@@ -61,6 +100,21 @@ export function Integrations() {
     if (manageConnector === 'tenable' && (!genAccessKey.trim() || !genSecretKey.trim())) {
       setGenTestStatus('fail')
       setGenTestMsg('Access Key and Secret Key are required')
+      return
+    }
+    if (manageConnector === 'servicenow' && (!genClientId.trim() || !genClientSecret.trim())) {
+      setGenTestStatus('fail')
+      setGenTestMsg('Client ID and Client Secret are required')
+      return
+    }
+    if (manageConnector === 'burpsuite' && !genApiKey.trim()) {
+      setGenTestStatus('fail')
+      setGenTestMsg('API Key is required')
+      return
+    }
+    if (manageConnector === 'fortify' && !genClientToken.trim()) {
+      setGenTestStatus('fail')
+      setGenTestMsg('Client Auth Token is required')
       return
     }
     try {
@@ -117,6 +171,7 @@ export function Integrations() {
   const [configUserId, setConfigUserId] = useState('')
   const [configPassword, setConfigPassword] = useState('')
   const [configValue, setConfigValue] = useState('')
+  const [qualysTlsValidation, setQualysTlsValidation] = useState('Enabled')
   const [testMsg, setTestMsg] = useState('')
   const [testStatus, setTestStatus] = useState<'idle' | 'success' | 'fail'>('idle')
 
@@ -247,14 +302,39 @@ export function Integrations() {
                       {connected ? 'Connected' : 'Not Connected'}
                     </span>
                   </div>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full self-start ${c.category === 'Vulnerability Scanner' ? 'bg-red-100 text-red-700' : c.category === 'CMDB' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>{c.category}</span>
                   <p className="text-xs text-muted-foreground leading-relaxed flex-1">{c.description}</p>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-2">
                     {connected ? (
-                      <button onClick={() => genSync(c.name)} disabled={genSyncing === c.name} className="flex-1 h-8 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 cursor-pointer">
-                        {genSyncing === c.name ? 'Syncing…' : 'Sync Now'}
-                      </button>
+                      <>
+                        <button onClick={() => genSync(c.name)} disabled={genSyncing === c.name} className="h-8 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 cursor-pointer">
+                          {genSyncing === c.name ? 'Syncing…' : 'API Sync'}
+                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => { setManageConnector(c.name); setGenEndpoint(''); setGenUsername(''); setGenPassword(''); setGenAccessKey(''); setGenSecretKey(''); setGenTestStatus('idle') }}
+                            className="flex-1 h-8 text-xs font-semibold rounded-lg border border-border text-foreground/80 hover:bg-muted cursor-pointer"
+                          >
+                            Manage
+                          </button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                await fetch(`/api/integrations/${c.name}/disconnect`, { method: 'POST' })
+                                toast.success(`Disconnected from ${c.display_name}`)
+                                fetchConnectors()
+                              } catch {
+                                toast.error('Failed to disconnect')
+                              }
+                            }}
+                            className="h-8 px-3 text-xs font-semibold rounded-lg border border-border text-red-600 hover:bg-red-50 cursor-pointer"
+                          >
+                            Disconnect
+                          </button>
+                        </div>
+                      </>
                     ) : (
-                      <button onClick={() => { setManageConnector(c.name); setGenEndpoint(''); setGenUsername(''); setGenPassword(''); setGenAccessKey(''); setGenSecretKey(''); setGenTestStatus('idle') }} className="flex-1 h-8 text-xs font-semibold rounded-lg border border-border hover:bg-muted cursor-pointer">
+                      <button onClick={() => { setManageConnector(c.name); setGenEndpoint(''); setGenUsername(''); setGenPassword(''); setGenAccessKey(''); setGenSecretKey(''); setGenTestStatus('idle') }} className="h-8 text-xs font-semibold rounded-lg border border-border hover:bg-muted cursor-pointer">
                         Connect
                       </button>
                     )}
@@ -368,6 +448,17 @@ export function Integrations() {
                   className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                 />
               </div>
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground block mb-1">X-Requested-With Header</label>
+                <input value="RBVM Connector" readOnly className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-muted text-muted-foreground cursor-not-allowed" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground block mb-1">TLS Certificate Validation</label>
+                <select value={qualysTlsValidation} onChange={(e) => setQualysTlsValidation(e.target.value)} className="w-full h-9 px-2 text-sm rounded-md border border-border/60 bg-background">
+                  <option value="Enabled">Enabled</option>
+                  <option value="Disabled">Disabled (controlled lab only)</option>
+                </select>
+              </div>
               <button
                 onClick={async () => {
                   if (!/^https?:\/\/.+/.test(configValue.trim())) {
@@ -400,7 +491,7 @@ export function Integrations() {
                     const res = await fetch('/api/integrations/qualys/connect', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ endpoint: configValue, username: configUserId, password: configPassword }),
+                      body: JSON.stringify({ endpoint: configValue, username: configUserId, password: configPassword, extra_fields: { tls_validation: qualysTlsValidation, x_requested_with: 'RBVM Connector' } }),
                     })
                     if (!res.ok) throw new Error('connect failed')
                     setConnected(true)
@@ -496,7 +587,7 @@ export function Integrations() {
 
       {manageConnector && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40" onClick={() => setManageConnector(null)}>
-          <div className="bg-card rounded-2xl shadow-2xl w-[440px] max-w-full" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-card rounded-2xl shadow-2xl w-[440px] max-w-full max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="px-5 py-4 border-b border-border flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Settings className="h-4 w-4 text-blue-600" />
@@ -511,7 +602,7 @@ export function Integrations() {
                 </span>
               )}
             </div>
-            <div className="p-5 space-y-3">
+            <div className="p-5 space-y-3 overflow-y-auto flex-1">
               <p className="text-xs text-muted-foreground">
                 {allConnectors.find((c) => c.name === manageConnector)?.description}
               </p>
@@ -525,19 +616,36 @@ export function Integrations() {
                   Output format: .nessus (native XML format) or CSV export
                 </p>
               )}
+              {manageConnector === 'rapid7' && (
+                <p className="text-[11px] text-blue-600 bg-blue-50 border border-blue-100 rounded-md px-2.5 py-1.5">
+                  Output format: JSON via REST API (APIv3 VulnerabilityFinding)
+                </p>
+              )}
+              {manageConnector === 'servicenow' && (
+                <p className="text-[11px] text-blue-600 bg-blue-50 border border-blue-100 rounded-md px-2.5 py-1.5">
+                  Output format: JSON via Table API — asset/CI discovery (not vulnerability findings)
+                </p>
+              )}
+              {manageConnector === 'opentext' && (
+                <p className="text-[11px] text-blue-600 bg-blue-50 border border-blue-100 rounded-md px-2.5 py-1.5">
+                  Output format: JSON via Issues API — auth uses FortifyToken (obtained via one-time Basic Auth)
+                </p>
+              )}
+              {manageConnector === 'fortify' && (
+                <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-100 rounded-md px-2.5 py-1.5">
+                  Output format: FPR/FVDL (no stable published schema) or ScanCentral SAST job-status JSON. This connector reads defensively due to schema instability across Fortify SCA versions.
+                </p>
+              )}
               {manageConnector === 'tenable' ? (
                 <>
                   <div>
                     <label className="text-xs font-semibold text-muted-foreground block mb-1">Tenable API Base URL</label>
-                    <input
-                      value="https://cloud.tenable.com"
-                      readOnly
-                      className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-muted text-muted-foreground cursor-not-allowed"
-                    />
+                    <input value="https://cloud.tenable.com" readOnly className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-muted text-muted-foreground cursor-not-allowed" />
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-muted-foreground block mb-1">Access Key</label>
                     <input
+                      type="password"
                       value={genAccessKey}
                       onChange={(e) => { setGenAccessKey(e.target.value); setGenTestStatus('idle') }}
                       placeholder="Enter Tenable access key"
@@ -551,6 +659,256 @@ export function Integrations() {
                       value={genSecretKey}
                       onChange={(e) => { setGenSecretKey(e.target.value); setGenTestStatus('idle') }}
                       placeholder="Enter Tenable secret key"
+                      className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">TLS Certificate Validation</label>
+                    <select value={genTlsValidation} onChange={(e) => setGenTlsValidation(e.target.value)} className="w-full h-9 px-2 text-sm rounded-md border border-border/60 bg-background">
+                      <option value="Enabled">Enabled</option>
+                      <option value="Disabled">Disabled (controlled lab only)</option>
+                    </select>
+                  </div>
+                </>
+              ) : manageConnector === 'servicenow' ? (
+                <>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">ServiceNow Instance URL</label>
+                    <input
+                      value={genEndpoint}
+                      onChange={(e) => { setGenEndpoint(e.target.value); setGenTestStatus('idle') }}
+                      placeholder="https://<instance>.service-now.com"
+                      className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">OAuth Client ID</label>
+                    <input
+                      value={genClientId}
+                      onChange={(e) => { setGenClientId(e.target.value); setGenTestStatus('idle') }}
+                      placeholder="Enter ServiceNow OAuth client ID"
+                      className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">OAuth Client Secret</label>
+                    <input
+                      type="password"
+                      value={genClientSecret}
+                      onChange={(e) => { setGenClientSecret(e.target.value); setGenTestStatus('idle') }}
+                      placeholder="Enter ServiceNow OAuth client secret"
+                      className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">Token Endpoint</label>
+                    <input value="/oauth_token.do" readOnly className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-muted text-muted-foreground cursor-not-allowed" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">CMDB Tables or Classes</label>
+                    <input
+                      value={genCmdbTables}
+                      onChange={(e) => { setGenCmdbTables(e.target.value); setGenTestStatus('idle') }}
+                      placeholder="cmdb_ci, cmdb_rel_ci"
+                      className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">Returned Fields</label>
+                    <input
+                      value={genReturnedFields}
+                      onChange={(e) => { setGenReturnedFields(e.target.value); setGenTestStatus('idle') }}
+                      placeholder="sys_id,name,sys_class_name,operational_status,install_status,sys_updated_on"
+                      className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">Page Size</label>
+                    <input
+                      type="number"
+                      value={genPageSize}
+                      onChange={(e) => { setGenPageSize(e.target.value); setGenTestStatus('idle') }}
+                      placeholder="1000"
+                      className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">TLS Certificate Validation</label>
+                    <select value={genTlsValidation} onChange={(e) => setGenTlsValidation(e.target.value)} className="w-full h-9 px-2 text-sm rounded-md border border-border/60 bg-background">
+                      <option value="Enabled">Enabled</option>
+                      <option value="Disabled">Disabled (controlled lab only)</option>
+                    </select>
+                  </div>
+                </>
+              ) : manageConnector === 'custom_cmdb' ? (
+                <>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">API Base URL</label>
+                    <input
+                      value={genEndpoint}
+                      onChange={(e) => { setGenEndpoint(e.target.value); setGenTestStatus('idle') }}
+                      placeholder="https://<customer_cmdb_api>"
+                      className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">OpenAPI Document URL</label>
+                    <input
+                      value={genOpenApiUrl}
+                      onChange={(e) => { setGenOpenApiUrl(e.target.value); setGenTestStatus('idle') }}
+                      placeholder="https://<customer_cmdb_api>/openapi.json"
+                      className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">OAuth Token URL</label>
+                    <input
+                      value={genOauthTokenUrl}
+                      onChange={(e) => { setGenOauthTokenUrl(e.target.value); setGenTestStatus('idle') }}
+                      placeholder="https://<authorization_server>/oauth/token"
+                      className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">Client ID</label>
+                    <input
+                      value={genClientId}
+                      onChange={(e) => { setGenClientId(e.target.value); setGenTestStatus('idle') }}
+                      placeholder="Enter OAuth client ID"
+                      className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">Client Secret</label>
+                    <input
+                      type="password"
+                      value={genClientSecret}
+                      onChange={(e) => { setGenClientSecret(e.target.value); setGenTestStatus('idle') }}
+                      placeholder="Enter OAuth client secret"
+                      className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">OAuth Scope</label>
+                    <input
+                      value={genOauthScope}
+                      onChange={(e) => { setGenOauthScope(e.target.value); setGenTestStatus('idle') }}
+                      placeholder="Optional scope defined by the customer API"
+                      className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">Asset Collection Path</label>
+                    <input
+                      value={genAssetPath}
+                      onChange={(e) => { setGenAssetPath(e.target.value); setGenTestStatus('idle') }}
+                      placeholder="/assets"
+                      className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">Relationship Collection Path</label>
+                    <input
+                      value={genRelationshipPath}
+                      onChange={(e) => { setGenRelationshipPath(e.target.value); setGenTestStatus('idle') }}
+                      placeholder="/relationships"
+                      className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">JSON Records Path</label>
+                    <input
+                      value={genJsonRecordsPath}
+                      onChange={(e) => { setGenJsonRecordsPath(e.target.value); setGenTestStatus('idle') }}
+                      placeholder="data.items"
+                      className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">Source Primary-Key Field</label>
+                    <input
+                      value={genPrimaryKeyField}
+                      onChange={(e) => { setGenPrimaryKeyField(e.target.value); setGenTestStatus('idle') }}
+                      placeholder="id"
+                      className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">Updated-Timestamp Field</label>
+                    <input
+                      value={genUpdatedTsField}
+                      onChange={(e) => { setGenUpdatedTsField(e.target.value); setGenTestStatus('idle') }}
+                      placeholder="updated_at"
+                      className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">Pagination Strategy</label>
+                    <select value={genPaginationStrategy} onChange={(e) => setGenPaginationStrategy(e.target.value)} className="w-full h-9 px-2 text-sm rounded-md border border-border/60 bg-background">
+                      <option value="Cursor or continuation token">Cursor or continuation token</option>
+                      <option value="Offset and limit">Offset and limit</option>
+                      <option value="Next-link URL">Next-link URL</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">TLS Certificate Validation</label>
+                    <select value={genTlsValidation} onChange={(e) => setGenTlsValidation(e.target.value)} className="w-full h-9 px-2 text-sm rounded-md border border-border/60 bg-background">
+                      <option value="Enabled">Enabled</option>
+                      <option value="Disabled">Disabled (controlled lab only)</option>
+                    </select>
+                  </div>
+                </>
+              ) : manageConnector === 'burpsuite' ? (
+                <>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">Burp Suite DAST Server URL</label>
+                    <input
+                      value={genEndpoint}
+                      onChange={(e) => { setGenEndpoint(e.target.value); setGenTestStatus('idle') }}
+                      placeholder="https://<burp_dast_server>:<port>"
+                      className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">GraphQL Endpoint</label>
+                    <input value="/graphql/v1" readOnly className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-muted text-muted-foreground cursor-not-allowed" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">API Key</label>
+                    <input
+                      type="password"
+                      value={genApiKey}
+                      onChange={(e) => { setGenApiKey(e.target.value); setGenTestStatus('idle') }}
+                      placeholder="Enter API key created for the dedicated API user"
+                      className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">TLS Certificate Validation</label>
+                    <select value={genTlsValidation} onChange={(e) => setGenTlsValidation(e.target.value)} className="w-full h-9 px-2 text-sm rounded-md border border-border/60 bg-background">
+                      <option value="Enabled">Enabled</option>
+                      <option value="Disabled">Disabled (controlled lab only)</option>
+                    </select>
+                  </div>
+                </>
+              ) : manageConnector === 'fortify' ? (
+                <>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">ScanCentral Controller URL</label>
+                    <input
+                      value={genEndpoint}
+                      onChange={(e) => { setGenEndpoint(e.target.value); setGenTestStatus('idle') }}
+                      placeholder="https://scancentral-ctrl.apexbank.internal:8080"
+                      className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">Client Auth Token</label>
+                    <input
+                      type="password"
+                      value={genClientToken}
+                      onChange={(e) => { setGenClientToken(e.target.value); setGenTestStatus('idle') }}
+                      placeholder="Sent as 'fortify-client' header"
                       className="w-full h-9 px-3 text-sm rounded-md border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                     />
                   </div>
