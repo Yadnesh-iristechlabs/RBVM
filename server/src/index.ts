@@ -17,6 +17,10 @@ import assessmentRequestsRouter from './routes/assessmentRequests'
 import assessmentsRouter from './routes/assessments'
 import masterVulnerabilitiesRouter from './routes/masterVulnerabilities'
 import autoScanRouter from './routes/autoScan'
+import repositoryMasterRouter from './routes/repositoryMaster'
+import vulnerabilityExceptionsRouter from './routes/vulnerabilityExceptions'
+import ticketLifecycleRouter from './routes/ticketLifecycle'
+import { startRiskRecalculationScheduler } from './services/riskRecalcScheduler'
 
 dotenv.config()
 
@@ -44,8 +48,12 @@ app.use('/api/assessment-requests', assessmentRequestsRouter)
 app.use('/api/assessments', assessmentsRouter)
 app.use('/api/vulnerabilities', masterVulnerabilitiesRouter)
 app.use('/api/auto-scan', autoScanRouter)
+app.use('/api/repository-master', repositoryMasterRouter)
+app.use('/api/vulnerability-exceptions', vulnerabilityExceptionsRouter)
+app.use('/api/vulnerability-tickets', ticketLifecycleRouter)
 
 const port = process.env.PORT || 4001
 app.listen(port, () => {
   console.log(`server running on port ${port}`)
+  startRiskRecalculationScheduler()
 })

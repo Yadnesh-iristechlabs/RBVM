@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { Bug, LayoutDashboard, Server, Plug, Search as ScanIcon, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Settings2, ClipboardCheck } from 'lucide-react'
+import { Bug, LayoutDashboard, Server, Plug, Search as ScanIcon, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Settings2, ClipboardCheck, ShieldAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const RBVM_SUBITEMS = [
+  { to: '/vulnerabilities', label: 'Vulnerabilities', icon: ShieldAlert, end: false },
   { to: '/scans', label: 'Scans', icon: ScanIcon, end: false },
 ]
 

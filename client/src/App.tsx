@@ -4,6 +4,7 @@ import { Header } from '@/components/Header'
 import { AppSidebar } from '@/components/AppSidebar'
 import { Dashboard } from '@/pages/Dashboard'
 import { Assets } from '@/pages/Assets'
+import { Vulnerabilities } from '@/pages/Vulnerabilities'
 import { Integrations } from '@/pages/Integrations'
 import { Scans } from '@/pages/Scans'
 import { AdminMasters } from '@/pages/AdminMasters'
@@ -21,6 +22,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/assets" element={<Assets />} />
+              <Route path="/vulnerabilities" element={<Vulnerabilities />} />
               <Route path="/integrations" element={<Integrations />} />
               <Route path="/scans" element={<Scans />} />
             <Route path="/admin" element={<AdminMasters />} />

@@ -10,7 +10,8 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 *
 // Race-safety: uses a transaction + row lock so two simultaneous inserts
 // for the same finding on the same asset cannot both create duplicate masters.
 router.post('/discover', async (req, res) => {
-  const { assessment_id, asset_id, title, cve_id, severity, cvss_score, diagnosis, solution, discovered_by, is_draft } = req.body
+  const { assessment_id, asset_id, title, cve_id, severity, cvss_score, diagnosis, solution, discovered_by, is_draft,
+    source_type, repository_master_id, vrn, cwe_id, category, impact } = req.body
 
   if (!assessment_id || !asset_id || !title?.trim() || !severity) {
     return res.status(400).json({ error: 'assessment_id, asset_id, title, and severity are required' })
@@ -42,9 +43,11 @@ router.post('/discover', async (req, res) => {
       )
     } else {
       const created = await client.query(
-        `INSERT INTO master_vulnerabilities (title, cve_id, severity, cvss_score, diagnosis, solution, asset_id, created_by, updated_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, 'system', 'system') RETURNING *`,
-        [title.trim(), cve_id || null, severity, cvss_score || null, diagnosis || null, solution || null, asset_id]
+        `INSERT INTO master_vulnerabilities
+         (title, cve_id, severity, cvss_score, diagnosis, solution, asset_id, source_type, repository_master_id, vrn, cwe_id, category, impact, created_by, updated_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'system', 'system') RETURNING *`,
+        [title.trim(), cve_id || null, severity, cvss_score || null, diagnosis || null, solution || null, asset_id,
+         source_type || 'S', repository_master_id || null, vrn || null, cwe_id || null, category || null, impact || null]
       )
       masterVuln = created.rows[0]
     }
@@ -63,6 +66,57 @@ router.post('/discover', async (req, res) => {
     res.status(500).json({ error: 'failed to log finding' })
   } finally {
     client.release()
+  }
+})
+
+// Main Vulnerabilities list — one row per discovery, joined to its master record,
+// asset, and application. Drafts are excluded (nothing to act on until published).
+router.get('/', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        d.id AS discovery_id, d.master_vuln_id, d.snapshot_title AS title,
+        d.snapshot_severity AS severity, d.snapshot_cvss_score AS cvss_score,
+        d.ticket_status, d.assignment_status, d.assigned_owner,
+        d.compliance_status, d.compliance_expiry_date, d.reopen_count,
+        d.verdict_l1_status, d.created_at AS discovered_at,
+        m.cve_id, m.vrn, m.source_type, m.category, m.risk_score, m.inherent_risk,
+        m.residual_risk, m.cisa_kev, m.exploit_available, m.occurrence_count,
+        a.id AS asset_id, a.hostname, a.criticality AS asset_tier, a.exposure,
+        app.app_name
+      FROM vulnerability_discoveries d
+      JOIN master_vulnerabilities m ON m.id = d.master_vuln_id
+      JOIN assets a ON a.id = m.asset_id
+      LEFT JOIN applications app ON app.id = a.application_id
+      WHERE d.is_active = true AND d.is_draft = false
+      ORDER BY d.id DESC
+    `)
+    res.json(result.rows)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'failed to fetch vulnerabilities' })
+  }
+})
+
+router.post('/sync-threat-intel', async (req, res) => {
+  try {
+    const { enrichThreatIntelligence } = await import('../services/threatIntelEnrichment')
+    const result = await enrichThreatIntelligence()
+    res.json(result)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'failed to sync threat intelligence' })
+  }
+})
+
+router.post('/recalculate-risk', async (req, res) => {
+  try {
+    const { recalculateAllRiskScores } = await import('../services/riskRecalcScheduler')
+    const result = await recalculateAllRiskScores()
+    res.json(result)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'failed to recalculate risk scores' })
   }
 })
 
@@ -104,6 +158,253 @@ router.get('/all', async (req, res) => {
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'failed to fetch all findings' })
+  }
+})
+
+// Full detail for one discovery — used by the Vulnerability Detail Drawer
+// Update manual-entry compliance/reference fields on a master vulnerability
+router.put('/:id/compliance-fields', async (req, res) => {
+  const { cert_in_ref, rbi_audit_ref, pci_ref, owasp, sans25, stride, capec_wasc_id, vendor_advisory_id } = req.body
+
+  try {
+    const result = await pool.query(
+      `UPDATE master_vulnerabilities SET
+        cert_in_ref = COALESCE($1, cert_in_ref),
+        rbi_audit_ref = COALESCE($2, rbi_audit_ref),
+        pci_ref = COALESCE($3, pci_ref),
+        owasp = COALESCE($4, owasp),
+        sans25 = COALESCE($5, sans25),
+        stride = COALESCE($6, stride),
+        capec_wasc_id = COALESCE($7, capec_wasc_id),
+        vendor_advisory_id = COALESCE($8, vendor_advisory_id),
+        updated_at = NOW()
+       WHERE id = $9 RETURNING *`,
+      [cert_in_ref, rbi_audit_ref, pci_ref, owasp, sans25, stride, capec_wasc_id, vendor_advisory_id, req.params.id]
+    )
+    if (result.rows.length === 0) return res.status(404).json({ error: 'not found' })
+    res.json(result.rows[0])
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'failed to update compliance fields' })
+  }
+})
+
+// Compensating Controls Master — list all active controls
+router.get('/compensating-controls', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM compensating_controls_master WHERE is_active = true ORDER BY control_name ASC`
+    )
+    res.json(result.rows)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'failed to fetch compensating controls' })
+  }
+})
+
+// Get controls currently applied to a specific finding
+router.get('/:id/applied-controls', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT ac.id, ac.applied_by, ac.applied_at, cm.id AS control_id, cm.control_name, cm.discount_percent
+       FROM vulnerability_applied_controls ac
+       JOIN compensating_controls_master cm ON cm.id = ac.control_id
+       WHERE ac.master_vuln_id = $1 ORDER BY ac.applied_at ASC`,
+      [req.params.id]
+    )
+    res.json(result.rows)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'failed to fetch applied controls' })
+  }
+})
+
+// Apply a compensating control to a finding -> recalculates and stores Residual Risk
+router.post('/:id/applied-controls', async (req, res) => {
+  const { control_id, applied_by } = req.body
+  if (!control_id || !applied_by?.trim()) {
+    return res.status(400).json({ error: 'control_id and applied_by are required' })
+  }
+
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+
+    const vulnResult = await client.query('SELECT risk_score FROM master_vulnerabilities WHERE id = $1', [req.params.id])
+    if (vulnResult.rows.length === 0) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'not found' }) }
+
+    await client.query(
+      `INSERT INTO vulnerability_applied_controls (master_vuln_id, control_id, applied_by) VALUES ($1, $2, $3)
+       ON CONFLICT (master_vuln_id, control_id) DO NOTHING`,
+      [req.params.id, control_id, applied_by.trim()]
+    )
+
+    const controlsResult = await client.query(
+      `SELECT cm.discount_percent FROM vulnerability_applied_controls ac
+       JOIN compensating_controls_master cm ON cm.id = ac.control_id
+       WHERE ac.master_vuln_id = $1`,
+      [req.params.id]
+    )
+
+    const totalDiscount = Math.min(
+      controlsResult.rows.reduce((sum, r) => sum + Number(r.discount_percent), 0),
+      50
+    )
+    const inherentRisk = Number(vulnResult.rows[0].risk_score) || 0
+    const residualRisk = Math.round(inherentRisk * (1 - totalDiscount / 100))
+
+    await client.query(
+      `UPDATE master_vulnerabilities SET residual_risk = $1, updated_at = NOW() WHERE id = $2`,
+      [residualRisk, req.params.id]
+    )
+
+    await client.query('COMMIT')
+    res.status(201).json({ total_discount_percent: totalDiscount, inherent_risk: inherentRisk, residual_risk: residualRisk })
+  } catch (err) {
+    await client.query('ROLLBACK')
+    console.error(err)
+    res.status(500).json({ error: 'failed to apply control' })
+  } finally {
+    client.release()
+  }
+})
+
+// Remove a compensating control from a finding -> recalculates Residual Risk
+router.delete('/applied-controls/:appliedId', async (req, res) => {
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+
+    const appliedResult = await client.query('SELECT master_vuln_id FROM vulnerability_applied_controls WHERE id = $1', [req.params.appliedId])
+    if (appliedResult.rows.length === 0) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'not found' }) }
+    const masterVulnId = appliedResult.rows[0].master_vuln_id
+
+    await client.query('DELETE FROM vulnerability_applied_controls WHERE id = $1', [req.params.appliedId])
+
+    const vulnResult = await client.query('SELECT risk_score FROM master_vulnerabilities WHERE id = $1', [masterVulnId])
+    const controlsResult = await client.query(
+      `SELECT cm.discount_percent FROM vulnerability_applied_controls ac
+       JOIN compensating_controls_master cm ON cm.id = ac.control_id
+       WHERE ac.master_vuln_id = $1`,
+      [masterVulnId]
+    )
+
+    const totalDiscount = Math.min(controlsResult.rows.reduce((sum, r) => sum + Number(r.discount_percent), 0), 50)
+    const inherentRisk = Number(vulnResult.rows[0].risk_score) || 0
+    const residualRisk = controlsResult.rows.length > 0 ? Math.round(inherentRisk * (1 - totalDiscount / 100)) : null
+
+    await client.query(`UPDATE master_vulnerabilities SET residual_risk = $1, updated_at = NOW() WHERE id = $2`, [residualRisk, masterVulnId])
+
+    await client.query('COMMIT')
+    res.json({ success: true, residual_risk: residualRisk })
+  } catch (err) {
+    await client.query('ROLLBACK')
+    console.error(err)
+    res.status(500).json({ error: 'failed to remove control' })
+  } finally {
+    client.release()
+  }
+})
+
+router.get('/:id/url-locations', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM vulnerability_url_locations WHERE master_vuln_id = $1 AND is_active = true ORDER BY id ASC`,
+      [req.params.id]
+    )
+    res.json(result.rows)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'failed to fetch url locations' })
+  }
+})
+
+router.post('/:id/url-locations', async (req, res) => {
+  const { url, reported_by } = req.body
+  if (!url?.trim()) return res.status(400).json({ error: 'url is required' })
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO vulnerability_url_locations (master_vuln_id, url, reported_by) VALUES ($1, $2, $3) RETURNING *`,
+      [req.params.id, url.trim(), reported_by || null]
+    )
+    res.status(201).json(result.rows[0])
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'failed to add url location' })
+  }
+})
+
+router.put('/url-locations/:locationId/status', async (req, res) => {
+  const { status } = req.body
+  if (!['Open', 'Fixed', 'Not Applicable'].includes(status)) {
+    return res.status(400).json({ error: 'status must be Open, Fixed, or Not Applicable' })
+  }
+  try {
+    const result = await pool.query(
+      `UPDATE vulnerability_url_locations SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+      [status, req.params.locationId]
+    )
+    if (result.rows.length === 0) return res.status(404).json({ error: 'not found' })
+    res.json(result.rows[0])
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'failed to update status' })
+  }
+})
+
+router.delete('/url-locations/:locationId', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `UPDATE vulnerability_url_locations SET is_active = false WHERE id = $1 RETURNING id`,
+      [req.params.locationId]
+    )
+    if (result.rows.length === 0) return res.status(404).json({ error: 'not found' })
+    res.json({ success: true })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'failed to remove url location' })
+  }
+})
+
+router.get('/discovery/:id', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        d.*, d.snapshot_title AS title, d.snapshot_severity AS severity,
+        d.snapshot_cvss_score AS cvss_score,
+        m.cve_id, m.vrn, m.cwe_id, m.source_type, m.category, m.ease_of_exploitation,
+        m.cia_impact, m.ext_reference, m.owasp, m.sans25, m.stride, m.pci_ref,
+        m.cert_in_ref, m.rbi_audit_ref, m.exploit_available, m.cisa_kev, m.occurrence_count,
+        m.inherent_risk, m.residual_risk, m.risk_score, m.impact AS master_impact, m.risk_type_justification,
+        m.good_reads, m.compensating_control, m.asset_id,
+        m.vulnerability_no, m.capec_wasc_id, m.vendor_advisory_id, m.target_url_location,
+        m.epss_score, m.epss_percentile, m.cisa_ransomware,
+        a.hostname, a.criticality AS asset_tier, a.exposure, a.ip_address, a.owner AS asset_owner,
+        app.app_name, app.app_tier, app.is_sox_scoped
+      FROM vulnerability_discoveries d
+      JOIN master_vulnerabilities m ON m.id = d.master_vuln_id
+      JOIN assets a ON a.id = m.asset_id
+      LEFT JOIN applications app ON app.id = a.application_id
+      WHERE d.id = $1
+    `, [req.params.id])
+
+    if (result.rows.length === 0) return res.status(404).json({ error: 'not found' })
+
+    const auditResult = await pool.query(
+      `SELECT * FROM vulnerability_audit_log WHERE discovery_id = $1 ORDER BY created_at ASC`,
+      [req.params.id]
+    )
+
+    const exceptionResult = await pool.query(
+      `SELECT * FROM vulnerability_exceptions WHERE discovery_id = $1 ORDER BY id DESC LIMIT 1`,
+      [req.params.id]
+    )
+
+    res.json({ ...result.rows[0], audit_history: auditResult.rows, latest_exception: exceptionResult.rows[0] || null })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'failed to fetch discovery detail' })
   }
 })
 

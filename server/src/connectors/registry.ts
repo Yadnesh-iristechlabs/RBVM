@@ -418,8 +418,8 @@ const fortifySSCAdapter: ConnectorAdapter = {
       )
       if (!masterResult.rows[0]) {
         await pool.query(
-          `INSERT INTO master_vulnerabilities (title, severity, cvss_score, diagnosis, solution, asset_id, created_by, updated_by)
-           VALUES ($1, $2, $3, $4, $5, $6, 'system', 'system')`,
+          `INSERT INTO master_vulnerabilities (title, severity, cvss_score, diagnosis, solution, asset_id, source_type, category, created_by, updated_by)
+           VALUES ($1, $2, $3, $4, $5, $6, 'S', $7, 'system', 'system')`,
           [
             issue.issueName,
             FRIORITY_TO_SEVERITY[issue.friority] || 'Low',
@@ -427,6 +427,7 @@ const fortifySSCAdapter: ConnectorAdapter = {
             `${issue.kingdom} — found in ${issue.fullFileName}:${issue.lineNumber} via ${issue.analyzer} analyzer`,
             'Refer to Fortify SSC audit workbench for detailed remediation guidance.',
             assetId,
+            issue.kingdom,
           ]
         )
         findingsSynced++
