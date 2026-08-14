@@ -29,6 +29,7 @@ export function Vulnerabilities() {
   const handleRecalculate = async () => {
     setRecalculating(true)
     try {
+      await fetch('/api/vulnerabilities/sync-threat-intel', { method: 'POST' })
       const res = await fetch('/api/vulnerabilities/recalculate-risk', { method: 'POST' })
       const data = await res.json()
       toast.success(`Risk scores recalculated: ${data.updated} updated${data.failed ? `, ${data.failed} failed` : ''}`)
