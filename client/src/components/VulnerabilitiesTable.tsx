@@ -41,15 +41,30 @@ const SEVERITY_BADGE: Record<string, string> = {
   Info: 'bg-slate-100 text-slate-600 border-slate-200',
 }
 
+const TICKET_STATUS_LABEL: Record<string, string> = { None: 'Not Started' }
+
 const TICKET_STATUS_BADGE: Record<string, string> = {
   None: 'bg-slate-100 text-slate-600 border-slate-200',
   Open: 'bg-red-100 text-red-700 border-red-200',
+  'Open Accepted': 'bg-orange-100 text-orange-700 border-orange-200',
+  'Open Rejected': 'bg-red-100 text-red-700 border-red-200',
   'In Process': 'bg-blue-100 text-blue-700 border-blue-200',
+  'In Process Accepted': 'bg-blue-100 text-blue-700 border-blue-200',
+  'In Process Rejected': 'bg-red-100 text-red-700 border-red-200',
   'In Exception': 'bg-purple-100 text-purple-700 border-purple-200',
+  'Remediation In Progress': 'bg-blue-100 text-blue-700 border-blue-200',
+  Remediated: 'bg-cyan-100 text-cyan-700 border-cyan-200',
   'UAT Remediated': 'bg-cyan-100 text-cyan-700 border-cyan-200',
+  'Production Remediated': 'bg-cyan-100 text-cyan-700 border-cyan-200',
   'Pending Verification': 'bg-amber-100 text-amber-700 border-amber-200',
+  Review: 'bg-purple-100 text-purple-700 border-purple-200',
+  'Review Accepted': 'bg-purple-100 text-purple-700 border-purple-200',
+  'Review Rejected': 'bg-red-100 text-red-700 border-red-200',
   Closed: 'bg-green-100 text-green-700 border-green-200',
   Reopened: 'bg-red-100 text-red-700 border-red-200',
+  Duplicate: 'bg-slate-100 text-slate-600 border-slate-200',
+  'False Positive': 'bg-slate-100 text-slate-600 border-slate-200',
+  'Compensating Control Applied': 'bg-green-100 text-green-700 border-green-200',
 }
 
 const COMPLIANCE_BADGE: Record<string, string> = {
@@ -202,7 +217,7 @@ export function VulnerabilitiesTable({ refreshKey, search = '', severityFilter =
                   <td className="px-4 py-3"><Badge text={SOURCE_LABEL[row.source_type]} cls="bg-slate-100 text-slate-600 border-slate-200" /></td>
                   <td className="px-4 py-3"><RiskScoreCell score={row.risk_score} rating={row.inherent_risk} /></td>
                   <td className="px-4 py-3">{row.compliance_status ? <Badge text={row.compliance_status} cls={COMPLIANCE_BADGE[row.compliance_status]} /> : <span className="text-xs text-muted-foreground">—</span>}</td>
-                  <td className="px-4 py-3"><Badge text={row.ticket_status} cls={TICKET_STATUS_BADGE[row.ticket_status] || TICKET_STATUS_BADGE.None} /></td>
+                  <td className="px-4 py-3"><Badge text={TICKET_STATUS_LABEL[row.ticket_status] || row.ticket_status} cls={TICKET_STATUS_BADGE[row.ticket_status] || TICKET_STATUS_BADGE.None} /></td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{row.assigned_owner || '—'}</td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{ageDays(row.discovered_at)}d</td>
                   <td className="px-4 py-3">
